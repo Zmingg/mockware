@@ -5,17 +5,22 @@ import {mockResponse} from './mock.response';
 
 const app = express();
 const MOCK_SERVER_PORT = process.env.PORT || 3001;
-const DEFAULT_URI = 'http://apispec.aecg.com.cn/schemas/ecgcloud/diagnosis.yaml';
-const DEFAULT_NAME = 'diagnosis';
+// const DEFAULT_URI = 'http://apispec.aecg.com.cn/schemas/ecgcloud/diagnosis.yaml';
+// const DEFAULT_NAME = 'diagnosis';
 const RESPONSE_CODE = {
   SUCCESS: 0,
   ERROR: 1
 }
 
+const errorHandler = function (err, req, res, next) {
+  res.status(err.status);
+  res.json({code: err.status, msg: err.message, serverTime: new Date().getTime()});
+}
+
 const mockMiddleware = (api) => (req, res, next) => {
 
   const {paths, basePath} = api;
-  const path = req.path.replace(new RegExp(`^${basePath}(.*)$`), '$1');
+  const path = req.swagger.pathName;
   const method = req.method.toLowerCase();
   const response = _.get(paths, `[${path}][${method}]['responses'][${res.statusCode}]`);
 
@@ -24,20 +29,18 @@ const mockMiddleware = (api) => (req, res, next) => {
     const schema = _.get(response, 'schema.properties.data', {});
     const result = mockResponse(schema);
 
-    res.json({
-      code: RESPONSE_CODE.SUCCESS, 
+    res.status(200).json({
+      code: result === false ? RESPONSE_CODE.ERROR : RESPONSE_CODE.SUCCESS, 
       data: result, 
       msg: response.description, 
       serverTime: new Date().getTime()
     });
-
-    res.end();
-  } else {
-    next();
   }
+  
+  next();
 }
 
-const startServer = (uri = DEFAULT_URI, name = DEFAULT_NAME) => createMiddleware(uri, app, function(err, middleware, api) {
+const startServer = (uri, name) => createMiddleware(uri, app, function(err, middleware, api) {
 
   const port = MOCK_SERVER_PORT;
 
@@ -53,7 +56,8 @@ const startServer = (uri = DEFAULT_URI, name = DEFAULT_NAME) => createMiddleware
       middleware.files(),
       middleware.parseRequest(),
       middleware.validateRequest(),
-      mockMiddleware(api)
+      mockMiddleware(api),
+      errorHandler
   );
 
   app.listen(port, function() {
@@ -61,9 +65,11 @@ const startServer = (uri = DEFAULT_URI, name = DEFAULT_NAME) => createMiddleware
   });
 });
 
-if (process.argv && process.argv.length >= 3) {
-  const uri = process.argv[2];
-  const name = process.argv[3];
+if (process.argv && process.argv.length >= 4) {
+  const name = process.argv[2];
+  const uri = process.argv[3];
 
   startServer(uri, name);
+} else {
+  console.log('missing args: name or uri');
 }

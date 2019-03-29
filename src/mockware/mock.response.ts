@@ -1,46 +1,39 @@
 import * as Mock from 'mockjs';
-
-const Random = Mock.Random;
-const STRING_RULES = {
-  name: '^.*name$',
-  organization: '^.*organization.*$',
-  time: '^.*time$',
-};
+import {RULES} from './rules';
 
 function mockImplement(property, key) {
   const type = property.type;
+  let result;
   
-  if (type === 'string') {
-    let typeRule;
-    Object.keys(STRING_RULES).forEach(rule => {
-      if (new RegExp(STRING_RULES[rule]).test(key.toLowerCase())) {
-        typeRule = rule;
+  for (let rule of Object.keys(RULES)) {
+    if (new RegExp(rule, 'i').test(key.toLowerCase())) {
+      result = Mock.mock(RULES[rule]);
+
+      if (typeof result === 'string' && type === 'integer') {
+        result = parseInt(result);
       }
-    })
 
-    switch (typeRule) {
-      case 'name':
-        return Random.cname();
-      case 'organization':
-        return Random.city() + Random.ctitle() + '机构';
-      case 'time': 
-        return Random.datetime()
+      break;
+    }
+  }
+
+  if (result === undefined) {
+    switch (type) {
+      case 'string':
+        result = Mock.mock('@ctitle');
+        break;
+      case 'integer':
+        result = Mock.mock('@natural(0,100)');
+        break;
+      case 'boolean':
+        result = Mock.mock('@boolean');
+        break;
       default:
-        return Random.ctitle();
+        result = '';
     }
   }
 
-  if (type === 'integer') {
-    const {format} = property;
-
-    if (format === 'int32') {
-      return Random.integer(0, 99999999);
-    }
-
-    return Random.integer(0);
-  }
-
-  return '';
+  return result;
 }
 
 function mockArr(obj, key) {
@@ -69,16 +62,13 @@ function mockObj(obj, key) {
 
 export function mockResponse(apiResponse, key = '') {
   const type = apiResponse.type;
-  let result;
 
-  if (type === 'object') {
-    result = mockObj(apiResponse, key)
-  } else if (type === 'array') {
-    result = mockArr(apiResponse, key);
-  } else {
-    result = mockImplement(apiResponse, key);
+  switch (type) {
+    case 'object':
+      return mockObj(apiResponse, key);
+    case 'array':
+      return mockArr(apiResponse, key);
+    default:
+      return mockImplement(apiResponse, key);
   }
-
-  return result;
-
 }

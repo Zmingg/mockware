@@ -1,14 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import * as pm2 from 'pm2';
 import * as detect from 'detect-port';
+import { AnyARecord } from 'dns';
 
 const DEFAULT_MOCK_PORT = 3001;
 
 @Injectable()
 export class AppService {
-  getHello(): string {
-    return 'Hello World!';
-  }
 
   async create(createMockDto: any) {
     const {uri, name} = createMockDto;
@@ -28,9 +26,9 @@ export class AppService {
         pm2.start({
           name,
           script: 'src/mockware/index.ts',
-          exec_mode: 'fork',
           args: [
-            uri, name
+            name,
+            uri
           ],
           env: {
             PORT: port
@@ -49,4 +47,44 @@ export class AppService {
     })
     
   )}
+
+  async stop(mockIdOrNames) {
+    return await new Promise((resolve, reject) => pm2.connect(async function(err) {
+      if (err) {
+        console.error(err)
+      }
+      const res = [];
+
+      for (let i = 0; i < mockIdOrNames.length; i++) {
+        await new Promise((_resolve) => {
+          const process = mockIdOrNames[i];
+          console.log(process)
+          pm2.delete(process, (err, processList) => {
+            if (err) reject(err);
+            pm2.disconnect();
+            res.push(process); 
+            _resolve();   
+          });
+        })
+      }
+
+      resolve(res);
+    }));
+  }
+
+  async list() {
+    return await new Promise((resolve, reject) => pm2.connect(function(err) {
+      if (err) {
+        console.error(err)
+      }
+
+      pm2.list((err, processList) => {
+        if (err) reject(err);
+        pm2.disconnect();
+        resolve(processList);     
+      });
+
+    }));
+  }
+
 }

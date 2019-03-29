@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body } from '@nestjs/common';
+import { Controller, Get, Post, Delete, Body } from '@nestjs/common';
 import { AppService } from './app.service';
 import { CreateMockDto } from './app.dto';
 
@@ -13,8 +13,13 @@ export class AppController {
     return this.appService.create(createMockDto);
   }
 
+  @Delete()
+  stop(@Body() mockIdOrNames: [any]) {
+    return this.appService.stop(mockIdOrNames);
+  }
+
   @Get()
-  getHello(): string {
-    return this.appService.getHello();
+  list() {
+    return this.appService.list();
   }
 }
