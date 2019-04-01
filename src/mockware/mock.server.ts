@@ -5,8 +5,6 @@ import {mockResponse} from './mock.response';
 
 const app = express();
 const MOCK_SERVER_PORT = process.env.PORT || 3001;
-// const DEFAULT_URI = 'http://apispec.aecg.com.cn/schemas/ecgcloud/diagnosis.yaml';
-// const DEFAULT_NAME = 'diagnosis';
 const RESPONSE_CODE = {
   SUCCESS: 0,
   ERROR: 1
@@ -40,7 +38,7 @@ const mockMiddleware = (api) => (req, res, next) => {
   next();
 }
 
-const startServer = (uri, name) => createMiddleware(uri, app, function(err, middleware, api) {
+const startServer = (path, name) => createMiddleware(path, app, function(err, middleware, api) {
 
   const port = MOCK_SERVER_PORT;
 
@@ -65,11 +63,12 @@ const startServer = (uri, name) => createMiddleware(uri, app, function(err, midd
   });
 });
 
+console.log(process.argv.length)
 if (process.argv && process.argv.length >= 4) {
-  const name = process.argv[2];
-  const uri = process.argv[3];
+  const path = process.argv[2];
+  const name = process.argv[3];
 
-  startServer(uri, name);
+  startServer(path, name);
 } else {
   console.log('missing args: name or uri');
 }
