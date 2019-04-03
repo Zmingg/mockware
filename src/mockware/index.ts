@@ -2,6 +2,9 @@ import * as express from 'express';
 import * as createMiddleware from 'swagger-express-middleware';
 import * as _ from 'lodash';
 import {mockResponse} from './mock.response';
+import {Logger} from '../lib/logger'
+
+const logger = new Logger();
 
 const app = express();
 const MOCK_SERVER_PORT = process.env.PORT || 3001;
@@ -17,7 +20,7 @@ const errorHandler = function (err, req, res, next) {
 
 const mockMiddleware = (api) => (req, res, next) => {
 
-  const {paths, basePath} = api;
+  const {paths} = api;
   const path = req.swagger.pathName;
   const method = req.method.toLowerCase();
   const response = _.get(paths, `[${path}][${method}]['responses'][${res.statusCode}]`);
@@ -43,7 +46,7 @@ const startServer = (path, name) => createMiddleware(path, app, function(err, mi
   const port = MOCK_SERVER_PORT;
 
   if (err) {
-    return console.log(err);
+    return logger.error(err);
   }
 
   // Add all the Swagger Express Middleware, or just the ones you need.
@@ -58,12 +61,9 @@ const startServer = (path, name) => createMiddleware(path, app, function(err, mi
       errorHandler
   );
 
-  app.listen(port, function() {
-      console.log(`Mock server(${name}) is now running at http://localhost:${port}`);
-  });
+  app.listen(port);
 });
 
-console.log(process.argv.length)
 if (process.argv && process.argv.length >= 4) {
   const path = process.argv[2];
   const name = process.argv[3];

@@ -1,0 +1,27 @@
+2019-04-03T05:03:12.208Z error: Mock(diagnosis) is exist
+2019-04-03T05:03:54.793Z error: Mock(diagnosis) is exist
+2019-04-03T05:05:57.376Z error: Mock(diagnosis) is exist
+2019-04-03T05:06:38.168Z error: Mock(diagnosis) is exist
+2019-04-03T05:07:00.728Z error: Mock(diagnosis) is exist
+2019-04-03T05:07:18.273Z error: Mock(diagnosis) is exist
+2019-04-03T05:07:47.556Z error: Mock(diagnosis) is exist
+2019-04-03T05:08:05.205Z error: Mock(diagnosis) is exist
+2019-04-03T05:26:01.419Z error: Expect "name" to be a typeof [object String], but now is [object Function]
+2019-04-03T05:27:53.483Z error: Expect "name" to be a typeof [object String], but now is [object Function]
+2019-04-03T05:28:49.687Z error: Expect "name" to be a typeof [object String], but now is [object Function]
+2019-04-03T05:31:40.052Z error: Expect "name" to be a typeof [object String], but now is [object Function]
+2019-04-03T05:33:19.605Z error: Expect "name" to be a typeof [object String], but now is [object Function]
+2019-04-03T05:33:30.360Z error: Expect "name" to be a typeof [object String], but now is [object Function]
+2019-04-03T05:45:16.878Z error: Mock(diagnosis) is exist
+2019-04-03T06:18:49.578Z error: Process not found
+2019-04-03T06:19:07.024Z error: Process not found
+2019-04-03T08:23:13.427Z info: Mock server(diagnosis) is now running at http://localhost:3001
+2019-04-03T08:26:47.915Z error: Mock(diagnosis) is exist
+2019-04-03T08:27:46.455Z error: Mock(diagnosis) is exist
+2019-04-03T08:28:09.961Z error: Mock(diagnosis) is exist
+2019-04-03T08:28:13.406Z error: Mock(diagnosis) is exist
+2019-04-03T08:29:23.693Z error: Mock(diagnosis) is exist
+2019-04-03T08:29:53.999Z error: Mock(diagnosis) is exist
+2019-04-03T08:32:31.291Z error: Mock(diagnosis) is exist
+2019-04-03T08:34:16.123Z error: Mock(diagnosis) is exist
+2019-04-03T08:34:24.493Z error: Mock(diagnosis) is exist

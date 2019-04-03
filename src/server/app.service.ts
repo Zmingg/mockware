@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { start, list, stop } from '../mockware/mock.action';
+import { start, status, stop, restart } from '../mockware/mock.action';
 
 const DEFAULT_MOCK_PORT = 3001;
 
@@ -7,16 +7,20 @@ const DEFAULT_MOCK_PORT = 3001;
 export class AppService {
 
   async create(createMockDto: any) {
-    const {path, name} = createMockDto;
-    return await start(path, name);
+    const {path, name, port = DEFAULT_MOCK_PORT} = createMockDto;
+    return await start({path, name, port});
   }
 
   async stop(mockIdOrNames) {
     return await stop(mockIdOrNames);
   }
 
-  async list() {
-    return await list();
+  async restart(mockIdOrNames) {
+    return await restart(mockIdOrNames);
+  }
+
+  async status() {
+    return await status();
   }
 
 }

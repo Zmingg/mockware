@@ -1,15 +1,16 @@
 import * as program from 'commander';
 import * as inquirer from 'inquirer';
-import { start, list, stop, restart } from '../mockware/mock.action';
+import * as mockAction from '../mockware/mock.action';
 import * as _ from 'lodash';
 import * as shelljs from 'shelljs';
 
+const config = require('dotenv').config().parsed;
+const {DEFAULT_SERVER_PORT, DEFAULT_MOCK_PORT} = config;
+
 program
   .version('0.0.1')
-  .command('start [path] [name]', 'Start a new mock service')
-  .command('list', 'List the mock services')
-  .command('restart [name|id]', 'Restart mock')
-  .command('stop [name|id]', 'Stop mock');
+  .command('list', 'List mock services')
+  .command('restart [name|id]', 'Restart mock by name|id');
 
 const PROMPT = {
   PATH: {
@@ -25,11 +26,12 @@ const PROMPT = {
 
   NAME: {
     type: 'input', name: 'name', message: 'Give a name for the new mock', default: 'mock',
-    validate: async(v) => {
-      const processList = await list();
+    validate: async (v) => {
+      const processList = await mockAction.status();
       if (_.filter(processList, proc => proc.name === v).length > 0) {
         return `Name ${v} is exist`;
-      } else if (v === '') {
+      } else 
+      if (v === '') {
         return 'Invalid path input';
       } else {
         return true;
@@ -42,60 +44,74 @@ const PROMPT = {
   }
 };
 
-program.on('command:start', async function(options) {
-  let [path, name] = options;
+program
+  .command('add')
+  .description('Add a new mock service and start, infomation -h, --help')
+  .option("-n, --name [name]", "The name of a new mock service")
+  .option("-p, --port [port]", `Which port to use, defaults to ${DEFAULT_MOCK_PORT}`)
+  .action(async function(options){
+    let path, name, 
+      port = options.port || DEFAULT_MOCK_PORT;
+    const hasInputName = options.hasOwnProperty('name');
+    const hasInputPath = options.hasOwnProperty('path');
 
-  if (!path || !name) {
     const prompts = [];
-    !path && prompts.push(PROMPT.PATH);
-    !name && prompts.push(PROMPT.NAME);
-    
-    await new Promise((resolve, reject) => {
-      inquirer
-        .prompt(prompts)
-        .then(async answers => {
-          path = path || answers.path;
-          name = name || answers.name;
-          resolve();
-        });
-    });
-  }
+    !hasInputPath && prompts.push(PROMPT.PATH);
+    !hasInputName && prompts.push(PROMPT.NAME);
 
-  const res: any = await start(path, name);
+    if (prompts.length) {
+      await new Promise((resolve, reject) => {
+        inquirer
+          .prompt(prompts)
+          .then(async answers => {
+            path = options.path || answers.path;
+            name = !options.hasOwnProperty('name') ? answers.name : options.name;
+            resolve();
+          });
+      });
+    }
 
-  if (res.length) {
-    const {PORT} = res[0].pm2_env;
-    console.info(`Mock(${name}) started at ${PORT}.`);
-  }
-});
+    const res: any = await mockAction.start({path, name, port});
 
+    if (res && res.length) {
+      const {PORT} = res[0].pm2_env;
+      console.info(`Mock(${name}) started at ${PORT}.`);
+    }
+  });
 
 program.on('command:list', async function() {
-  const dirname = shelljs.pwd();
-  shelljs.exec(`chmod -R 755 ${dirname}/src/commander`);
-
-  const procList: any = await list();
+  const procList: any = await mockAction.status();
+  if (procList && procList.length) {
+    shelljs.exec(`echo Id Memory Cpu Port Pid Name|column -t`);
+  } else {
+    console.info('No mock is running')
+  }
   procList.forEach(proc => {
     const {name, pm_id, memory, cpu, port, pid} = proc;
-    shelljs.exec(`echo ${pm_id} ${name} ${Math.round(memory / (1024 * 1024))}M ${cpu}% ${port} ${pid} |column -t`);
+    shelljs.exec(`echo ${pm_id} ${Math.round(memory / (1024 * 1024))}M ${cpu}% ${port} ${pid} ${name} |column -t`);
   })
 });
 
-program.on('command:stop', async function(options) {
-  let [proc] = options;
-  if (!proc) {
-    inquirer
-    .prompt([PROMPT.PROCESS])
-    .then(async answers => {
-      proc = answers[PROMPT.PROCESS.name];
-    });
-  }
-
-  const res = await stop([proc]);
-  if (res) {
-    console.info(`Mock stopped successfully.`);
-  }
-});
+program
+  .command('remove [process]')
+  .alias('rm')
+  .description('Remove mock service by process name|id')
+  .action(async function(proc){
+    if (!proc) {
+      proc = await new Promise((resolve) => {
+        inquirer
+        .prompt([PROMPT.PROCESS])
+        .then(async answers => {
+          resolve(answers[PROMPT.PROCESS.name]);
+        });
+      })
+    }
+  
+    const res = await mockAction.stop([proc]);
+    if (res) {
+      console.info(`Mock stopped successfully.`);
+    }
+  })
 
 program.on('command:restart', async function(options) {
   let [proc] = options;
@@ -107,10 +123,42 @@ program.on('command:restart', async function(options) {
     });
   }
 
-  const res = await restart([proc]);
+  const res = await mockAction.restart([proc]);
   if (res) {
     console.info(`Mock restart successfully.`);
   }
 });
+
+program
+  .command('server [env]')
+  .description('Run mock server, infomation -h, --help')
+  .option("-s, --signal [signal]", "send signal to a master process: start, restart, stop")
+  .option("-p, --port [port]", "Which port to use, defaultsto 3000")
+  .action(async function(env, options){
+    const actions = ['start', 'restart', 'stop'];
+    let {signal, port = DEFAULT_SERVER_PORT} = options;
+    if (_.includes(actions, signal)) {
+      const res = signal === 'start' 
+        ? await mockAction.start({port, name: mockAction.SERVER_NAME}) 
+        : await mockAction[signal]([mockAction.SERVER_NAME]);
+      if (res) {
+        const message = signal === 'start' 
+          ? `Mock server is running at ${port}.`
+          : `Mock server ${signal} successfully.`
+        console.info(message);
+      }
+      return;
+    } 
+
+    const res: any = await mockAction.status(true);
+    if (res) {
+      const {memory, cpu, port, pid} = res;
+      shelljs.exec(`echo Memory Cpu Port Pid|column -t`);
+      shelljs.exec(`echo ${Math.round(memory / (1024 * 1024))}M ${cpu}% ${port} ${pid} |column -t`);
+    } else {
+      console.info('Mock server is not running.')
+      console.info('Use `mock server -h|--help` to show options')
+    }
+  });
 
 program.parse(process.argv);
