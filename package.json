@@ -1,17 +1,16 @@
 {
   "name": "mockware",
-  "version": "0.0.1",
+  "version": "0.0.1-beta1",
   "description": "",
   "author": "",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "format": "prettier --write \"src/**/*.ts\"",
-    "start": "ts-node src/main.ts",
-    "mock": "ts-node ./src/commander/index.ts"
+    "start": "ts-node src/main.ts"
   },
   "bin": {
-    "mock": "./src/commander/mock.sh"
+    "mock": "./bin/mock.sh"
   },
   "dependencies": {
     "@nestjs/common": "^6.0.5",

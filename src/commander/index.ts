@@ -9,12 +9,13 @@ const {DEFAULT_SERVER_PORT, DEFAULT_MOCK_PORT} = config;
 
 program
   .version('0.0.1')
+  .usage('Mockware')
   .command('list', 'List mock services')
   .command('restart [name|id]', 'Restart mock by name|id');
 
 const PROMPT = {
-  PATH: {
-    type: 'input', name: 'path', message: 'Input path or url of the new mock service', 
+  FILE: {
+    type: 'input', name: 'file', message: 'Input file path or url for the new mock', 
     validate: (v) => {
       if (v !== '') {
         return true;
@@ -48,15 +49,18 @@ program
   .command('add')
   .description('Add a new mock service and start, infomation -h, --help')
   .option("-n, --name [name]", "The name of a new mock service")
+  .option("-f, --file [path]", "The path or url for a yaml file")
   .option("-p, --port [port]", `Which port to use, defaults to ${DEFAULT_MOCK_PORT}`)
   .action(async function(options){
-    let path, name, 
-      port = options.port || DEFAULT_MOCK_PORT;
     const hasInputName = options.hasOwnProperty('name');
-    const hasInputPath = options.hasOwnProperty('path');
+    const hasInputFile = options.hasOwnProperty('file');
+
+    let file = options.file, 
+      name = hasInputName ? options.name : '',
+      port = options.port || DEFAULT_MOCK_PORT;
 
     const prompts = [];
-    !hasInputPath && prompts.push(PROMPT.PATH);
+    !hasInputFile && prompts.push(PROMPT.FILE);
     !hasInputName && prompts.push(PROMPT.NAME);
 
     if (prompts.length) {
@@ -64,14 +68,14 @@ program
         inquirer
           .prompt(prompts)
           .then(async answers => {
-            path = options.path || answers.path;
-            name = !options.hasOwnProperty('name') ? answers.name : options.name;
+            file = answers.file;
+            name = answers.name;
             resolve();
           });
       });
     }
 
-    const res: any = await mockAction.start({path, name, port});
+    const res: any = await mockAction.start({file, name, port});
 
     if (res && res.length) {
       const {PORT} = res[0].pm2_env;

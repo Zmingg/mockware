@@ -4,14 +4,16 @@ import { ProcessDescription } from './mock.dto';
 import * as _ from 'lodash';
 import { Logger } from '../lib/logger';
 
+export const SERVER_NAME = 'mockware-server';
+
 const config = require('dotenv').config().parsed;
 const {DEFAULT_MOCK_PORT} = config;
 const mockLogger = new Logger();
-export const SERVER_NAME = 'mockware-server';
+
 
 // pm2: start new mockware
 export async function start(opts) {
-  const {name, path, port = DEFAULT_MOCK_PORT} = opts;
+  const {name, file, port = DEFAULT_MOCK_PORT} = opts;
   const serverMode = name === SERVER_NAME;
 
   return await new Promise((resolve, reject) => pm2.connect(async err => {
@@ -40,13 +42,13 @@ export async function start(opts) {
     }
 
     detect(port).then(_port => {
+      const args = serverMode ? [] : [file, name];
+      
       pm2.start({
         name,
-        script: serverMode ? 'src/main.ts' : 'src/mockware/index.ts',
-        args: [
-          path,
-          name
-        ],
+        script: serverMode ? `./dist/main.js` : `./dist/mockware/index.js`,
+        max_restarts: 0,
+        args,
         env: {
           PORT: _port
         },
