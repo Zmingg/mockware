@@ -9,6 +9,7 @@ export declare const RULES: {
     '^.*id$': string;
     '^.*gender$': RegExp;
     '^.*ageUnit$': RegExp;
+    '^.*code$': string;
     '^.*time$': string;
     '^.*extend$': string;
     '^.*organization.*$': string;

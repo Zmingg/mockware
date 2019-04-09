@@ -70,12 +70,13 @@ program
                 inquirer
                     .prompt(prompts)
                     .then((answers) => __awaiter(this, void 0, void 0, function* () {
-                    file = answers.file;
-                    name = answers.name;
+                    file = answers.file || options.file;
+                    name = answers.name || options.name;
                     resolve();
                 }));
             });
         }
+        console.log({ file, name, port });
         const res = yield mockAction.start({ file, name, port });
         if (res && res.length) {
             const { PORT } = res[0].pm2_env;

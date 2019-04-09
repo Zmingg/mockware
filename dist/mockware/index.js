@@ -22,14 +22,9 @@ const mockMiddleware = (api) => (req, res, next) => {
     const method = req.method.toLowerCase();
     const response = _.get(paths, `[${path}][${method}]['responses'][${res.statusCode}]`);
     if (response) {
-        const schema = _.get(response, 'schema.properties.data', {});
-        const result = mock_response_1.mockResponse(schema);
-        res.status(200).json({
-            code: result === false ? RESPONSE_CODE.ERROR : RESPONSE_CODE.SUCCESS,
-            data: result,
-            msg: response.description,
-            serverTime: new Date().getTime()
-        });
+        const schema = _.get(response, 'schema', {});
+        const result = mock_response_1.mockHandle(schema);
+        res.status(200).json(result);
     }
     next();
 };

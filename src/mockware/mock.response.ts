@@ -1,6 +1,11 @@
 import * as Mock from 'mockjs';
 import {RULES} from './rules';
 
+const RESPONSE_CODE = {
+  SUCCESS: 0,
+  ERROR: 1
+}
+
 function mockImplement(property, key) {
   const type = property.type;
   let result;
@@ -60,15 +65,39 @@ function mockObj(obj, key) {
   return result;
 }
 
-export function mockResponse(apiResponse, key = '') {
-  const type = apiResponse.type;
+function mockResponse(apiResponse, key = '') {
 
-  switch (type) {
-    case 'object':
-      return mockObj(apiResponse, key);
-    case 'array':
-      return mockArr(apiResponse, key);
-    default:
-      return mockImplement(apiResponse, key);
+  if (apiResponse.hasOwnProperty('allOf')) {
+    let properties: any;
+    apiResponse.allOf.forEach(obj => {
+      properties = {...properties, ...obj.properties}
+    })
+    
+    return mockObj({properties}, key);
+  }
+
+  if (apiResponse.hasOwnProperty('properties')) {
+    return mockObj(apiResponse, key);
+  }
+
+  if (apiResponse.hasOwnProperty('items')) {
+    return mockArr(apiResponse, key);
+  }
+
+  return mockImplement(apiResponse, key);
+}
+
+export function mockHandle(schema, key = '') {
+  let result = mockResponse(schema);
+  
+  if (result.hasOwnProperty('code') && result.hasOwnProperty('data')) {
+    result = result.data;
+  }
+
+  return {
+    code: result === false ? RESPONSE_CODE.ERROR : RESPONSE_CODE.SUCCESS, 
+    data: result, 
+    msg: schema.description, 
+    serverTime: new Date().getTime()
   }
 }

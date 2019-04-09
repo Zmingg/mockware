@@ -9,6 +9,7 @@ export const RULES = {
     '^.*id$': '@natural(1000000000000000,9999999999999999)',
     '^.*gender$': /^[0129]$/,
     '^.*ageUnit$': /^[0-4]$/,
+    '^.*code$': '@string(upper,16)',
     '^.*time$': '@datetime',
     '^.*extend$': '@csentence',
     '^.*organization.*$': '@city(true)机构'

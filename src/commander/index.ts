@@ -68,12 +68,14 @@ program
         inquirer
           .prompt(prompts)
           .then(async answers => {
-            file = answers.file;
-            name = answers.name;
+            file = answers.file || options.file;
+            name = answers.name || options.name;
             resolve();
           });
       });
     }
+
+    console.log({file, name, port})
 
     const res: any = await mockAction.start({file, name, port});
 

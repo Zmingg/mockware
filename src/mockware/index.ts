@@ -1,7 +1,7 @@
 import * as express from 'express';
 import * as createMiddleware from 'swagger-express-middleware';
 import * as _ from 'lodash';
-import {mockResponse} from './mock.response';
+import {mockHandle} from './mock.response';
 import {Logger} from '../lib/logger'
 
 const logger = new Logger();
@@ -27,15 +27,10 @@ const mockMiddleware = (api) => (req, res, next) => {
 
   // get schema
   if (response) {
-    const schema = _.get(response, 'schema.properties.data', {});
-    const result = mockResponse(schema);
+    const schema = _.get(response, 'schema', {});
+    const result = mockHandle(schema);
 
-    res.status(200).json({
-      code: result === false ? RESPONSE_CODE.ERROR : RESPONSE_CODE.SUCCESS, 
-      data: result, 
-      msg: response.description, 
-      serverTime: new Date().getTime()
-    });
+    res.status(200).json(result);
   }
   
   next();
