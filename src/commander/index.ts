@@ -75,8 +75,6 @@ program
       });
     }
 
-    console.log({file, name, port})
-
     const res: any = await mockAction.start({file, name, port});
 
     if (res && res.length) {

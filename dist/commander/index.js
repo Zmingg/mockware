@@ -76,7 +76,6 @@ program
                 }));
             });
         }
-        console.log({ file, name, port });
         const res = yield mockAction.start({ file, name, port });
         if (res && res.length) {
             const { PORT } = res[0].pm2_env;
