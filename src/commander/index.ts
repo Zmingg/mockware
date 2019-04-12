@@ -6,9 +6,10 @@ import * as shelljs from 'shelljs';
 
 const config = require('dotenv').config().parsed;
 const {DEFAULT_SERVER_PORT, DEFAULT_MOCK_PORT} = config;
+const npmConfig = require('../../package.json');
 
 program
-  .version('0.0.1')
+  .version(npmConfig.version)
   .usage('Mockware')
   .command('list', 'List mock services')
   .command('restart [name|id]', 'Restart mock by name|id');
