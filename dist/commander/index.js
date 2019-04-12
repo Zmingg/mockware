@@ -8,13 +8,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const program = require("commander");
 const inquirer = require("inquirer");
-const mockAction = require("../mockware/mock.action");
+const mockAction = require("../mock/mock.action");
 const _ = require("lodash");
 const shelljs = require("shelljs");
+const program = require('commander');
 const config = require('dotenv').config().parsed;
-const { DEFAULT_SERVER_PORT, DEFAULT_MOCK_PORT } = config;
+const { DEFAULT_MOCK_PORT } = config;
 const npmConfig = require('../../package.json');
 program
     .version(npmConfig.version)
@@ -133,39 +133,6 @@ program.on('command:restart', function (options) {
         const res = yield mockAction.restart([proc]);
         if (res) {
             console.info(`Mock restart successfully.`);
-        }
-    });
-});
-program
-    .command('server [env]')
-    .description('Run mock server, infomation -h, --help')
-    .option("-s, --signal [signal]", "send signal to a master process: start, restart, stop")
-    .option("-p, --port [port]", "Which port to use, defaultsto 3000")
-    .action(function (env, options) {
-    return __awaiter(this, void 0, void 0, function* () {
-        const actions = ['start', 'restart', 'stop'];
-        let { signal, port = DEFAULT_SERVER_PORT } = options;
-        if (_.includes(actions, signal)) {
-            const res = signal === 'start'
-                ? yield mockAction.start({ port, name: mockAction.SERVER_NAME })
-                : yield mockAction[signal]([mockAction.SERVER_NAME]);
-            if (res) {
-                const message = signal === 'start'
-                    ? `Mock server is running at ${port}.`
-                    : `Mock server ${signal} successfully.`;
-                console.info(message);
-            }
-            return;
-        }
-        const res = yield mockAction.status(true);
-        if (res) {
-            const { memory, cpu, port, pid } = res;
-            shelljs.exec(`echo Memory Cpu Port Pid|column -t`);
-            shelljs.exec(`echo ${Math.round(memory / (1024 * 1024))}M ${cpu}% ${port} ${pid} |column -t`);
-        }
-        else {
-            console.info('Mock server is not running.');
-            console.info('Use `mock server -h|--help` to show options');
         }
     });
 });

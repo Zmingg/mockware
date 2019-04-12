@@ -1,11 +1,11 @@
-import * as program from 'commander';
 import * as inquirer from 'inquirer';
-import * as mockAction from '../mockware/mock.action';
+import * as mockAction from '../mock/mock.action';
 import * as _ from 'lodash';
 import * as shelljs from 'shelljs';
 
+const program = require('commander');
 const config = require('dotenv').config().parsed;
-const {DEFAULT_SERVER_PORT, DEFAULT_MOCK_PORT} = config;
+const {DEFAULT_MOCK_PORT} = config;
 const npmConfig = require('../../package.json');
 
 program
@@ -133,37 +133,5 @@ program.on('command:restart', async function(options) {
     console.info(`Mock restart successfully.`);
   }
 });
-
-program
-  .command('server [env]')
-  .description('Run mock server, infomation -h, --help')
-  .option("-s, --signal [signal]", "send signal to a master process: start, restart, stop")
-  .option("-p, --port [port]", "Which port to use, defaultsto 3000")
-  .action(async function(env, options){
-    const actions = ['start', 'restart', 'stop'];
-    let {signal, port = DEFAULT_SERVER_PORT} = options;
-    if (_.includes(actions, signal)) {
-      const res = signal === 'start' 
-        ? await mockAction.start({port, name: mockAction.SERVER_NAME}) 
-        : await mockAction[signal]([mockAction.SERVER_NAME]);
-      if (res) {
-        const message = signal === 'start' 
-          ? `Mock server is running at ${port}.`
-          : `Mock server ${signal} successfully.`
-        console.info(message);
-      }
-      return;
-    } 
-
-    const res: any = await mockAction.status(true);
-    if (res) {
-      const {memory, cpu, port, pid} = res;
-      shelljs.exec(`echo Memory Cpu Port Pid|column -t`);
-      shelljs.exec(`echo ${Math.round(memory / (1024 * 1024))}M ${cpu}% ${port} ${pid} |column -t`);
-    } else {
-      console.info('Mock server is not running.')
-      console.info('Use `mock server -h|--help` to show options')
-    }
-  });
 
 program.parse(process.argv);

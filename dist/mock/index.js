@@ -28,7 +28,7 @@ const mockMiddleware = (api) => (req, res, next) => {
     }
     next();
 };
-const startServer = (path, name) => createMiddleware(path, app, function (err, middleware, api) {
+const startServer = (file, name) => createMiddleware(file, app, function (err, middleware, api) {
     const port = MOCK_SERVER_PORT;
     if (err) {
         return logger.error(err);
@@ -37,9 +37,9 @@ const startServer = (path, name) => createMiddleware(path, app, function (err, m
     app.listen(port);
 });
 if (process.argv && process.argv.length >= 4) {
-    const path = process.argv[2];
+    const file = process.argv[2];
     const name = process.argv[3];
-    startServer(path, name);
+    startServer(file, name);
 }
 else {
     console.log('missing args: name or uri');

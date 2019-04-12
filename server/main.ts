@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './server/app.module';
-import { ResponseInterceptor } from './server/response.interceptor';
+import { AppModule } from './app.module';
+import { ResponseInterceptor } from './response.interceptor';
 
 const MOCK_SERVER_PORT = process.env.PORT || 3000;
 

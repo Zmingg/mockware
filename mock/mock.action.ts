@@ -4,17 +4,19 @@ import { ProcessDescription } from './mock.dto';
 import * as _ from 'lodash';
 import { Logger } from '../lib/logger';
 
-export const SERVER_NAME = 'mockware-server';
-
 const config = require('dotenv').config().parsed;
 const {DEFAULT_MOCK_PORT} = config;
 const mockLogger = new Logger();
 
+export const PREFIX = '-mockware-';
+const isMock = name => new RegExp(`^${PREFIX}.+$`).test(name);
+const enPrefix = name => `${PREFIX}${name}`;
+const dePrefix = perfixName => perfixName.replace(new RegExp(`^${PREFIX}(.+)$`), '$1');
 
 // pm2: start new mockware
 export async function start(opts) {
   const {name, file, port = DEFAULT_MOCK_PORT} = opts;
-  const serverMode = name === SERVER_NAME;
+  const nameWithPrefix = enPrefix(name);
 
   return await new Promise((resolve, reject) => pm2.connect(async err => {
     if (err) {
@@ -29,24 +31,24 @@ export async function start(opts) {
           mockLogger.error(err);
           reject(err);
         } else {
-          _resolve(!!_.filter(processList, proc => proc.name === name).length);
+          _resolve(!!_.filter(processList, proc => proc.name === nameWithPrefix).length);
         }
       })
     })
 
     if (nameExist) {
-      const err = serverMode ? 'Mock server is exist' : `Mock(${name}) is exist`;
+      const err = `Mock(${name}) is exist`;
       mockLogger.error(err);
       pm2.disconnect();
       return resolve();
     }
 
     detect(port).then(_port => {
-      const args = serverMode ? [] : [file, name];
+      const args = [file, nameWithPrefix];
       
       pm2.start({
-        name,
-        script: serverMode ? `./dist/main.js` : `./dist/mockware/index.js`,
+        name: nameWithPrefix,
+        script: './dist/mock/index.js',
         max_restarts: 0,
         args,
         env: {
@@ -67,7 +69,7 @@ export async function start(opts) {
 };
 
 // pm2 list
-export async function status(serverMode = false) {
+export async function status() {
 
   return await new Promise((resolve, reject) => pm2.connect(err => {
     if (err) {
@@ -81,12 +83,14 @@ export async function status(serverMode = false) {
         mockLogger.error(err);
         reject(err);
       } else {
-        const res = processList.map((processDescription: ProcessDescription) => {
-          const {pm_id, name, pid, monit, pm2_env} = processDescription;
+        const mocks = _.filter(processList, proc => isMock(proc.name));
+
+        const res = mocks.map(mock => {
+          const {pm_id, name, pid, monit, pm2_env} = mock;
           const {status, pm_uptime, restart_time, PORT} = pm2_env;
           return {
             pm_id, 
-            name, 
+            name: dePrefix(name), 
             update_time: pm_uptime,
             restarts: restart_time,
             status,
@@ -96,12 +100,7 @@ export async function status(serverMode = false) {
           }
         })
 
-        if (!serverMode) {
-          resolve(_.filter(res, proc => proc.name !== SERVER_NAME))
-        } else {
-          resolve(_.get(_.filter(res, proc => proc.name === SERVER_NAME), '[0]'));
-        }
-      
+        resolve(res); 
       }
     })
   }));
@@ -115,8 +114,12 @@ export async function stop(mockIdOrNames: any[]) {
     }
 
     for (let i = 0; i < mockIdOrNames.length; i++) {
+      let symbol = mockIdOrNames[i];
+      if (isNaN(parseInt(symbol))) {
+        symbol = enPrefix(symbol);
+      }
+
       await new Promise((_resolve) => {
-        const symbol = mockIdOrNames[i];
         pm2.delete(symbol, (err, processList: any) => {
           if (err) {
             pm2.disconnect();
@@ -140,8 +143,12 @@ export async function restart(mockIdOrNames) {
     }
 
     for (let i = 0; i < mockIdOrNames.length; i++) {
+      let symbol = mockIdOrNames[i];
+      if (isNaN(parseInt(symbol))) {
+        symbol = enPrefix(symbol);
+      }
+
       await new Promise((_resolve) => {
-        const symbol = mockIdOrNames[i];
         pm2.restart(symbol, (err, processList) => {
           if (err) {
             pm2.disconnect();
